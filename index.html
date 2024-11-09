@@ -1,473 +1,330 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>Todo List</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
     <style>
         :root {
-            --dark-bg: #121212;
-            --darker-bg: #000000;
-            --chat-bg: #262626;
+            --bg-primary: #121212;
+            --bg-secondary: #1a1a1a;
             --text-primary: #ffffff;
             --text-secondary: #8e8e8e;
-            --accent-color: #0095f6;
-            --danger-color: #ed4956;
-            --message-bg: #363636;
-            --input-bg: #262626;
-            --border-color: #363636;
-            --priority-high: #ff4d4d;
-            --priority-medium: #ffb84d;
-            --priority-low: #4dcf94;
+            --accent: #0095f6;
+            --danger: #ed4956;
+            --success: #00c04b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            background-color: var(--dark-bg);
+            background: var(--bg-primary);
             color: var(--text-primary);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-        }
-
-        .app-container {
-            max-width: 600px;
-            margin: 0 auto;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background: var(--darker-bg);
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 470px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .header {
-            background: var(--chat-bg);
-            border-bottom: 1px solid var(--border-color);
-            padding: 15px;
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            margin-bottom: 24px;
         }
 
-        .logo {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--accent-color);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column-reverse;
-        }
-
-        .message {
-            max-width: 85%;
-            margin-bottom: 15px;
-            position: relative;
-            align-self: flex-end;
-            animation: fadeInUp 0.3s ease;
-        }
-
-        .message-content {
-            background: var(--message-bg);
-            padding: 12px 16px;
-            border-radius: 20px;
-            margin-bottom: 4px;
-            word-break: break-word;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .todo-text {
-            font-size: 15px;
-        }
-
-        .todo-details {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .priority-badge {
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .priority-high { color: var(--priority-high); }
-        .priority-medium { color: var(--priority-medium); }
-        .priority-low { color: var(--priority-low); }
-
-        .due-date {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .message-actions {
-            position: absolute;
-            right: 100%;
-            top: 50%;
-            transform: translateY(-50%);
-            margin-right: 8px;
-            display: none;
-        }
-
-        .message:hover .message-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .action-btn {
-            background: var(--chat-bg);
-            border: none;
-            color: var(--text-primary);
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .action-btn:hover {
-            background: var(--accent-color);
-            transform: scale(1.1);
-        }
-
-        .action-btn.delete:hover {
-            background: var(--danger-color);
-        }
-
-        .message.completed .message-content {
-            background: var(--chat-bg);
-            color: var(--text-secondary);
-        }
-
-        .completed-icon {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--accent-color);
-        }
-
-        .timestamp {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-left: 16px;
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
         }
 
         .input-section {
-            background: var(--chat-bg);
-            border-top: 1px solid var(--border-color);
+            position: relative;
+            margin-bottom: 20px;
         }
 
-        .quick-options {
-            display: flex;
-            gap: 10px;
-            padding: 10px 15px;
-        }
-
-        .quick-options button {
-            background: var(--message-bg);
+        .input-section input {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            background: #262626;
             border: none;
+            border-radius: 8px;
             color: var(--text-primary);
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 13px;
+            font-size: 16px;
+        }
+
+        .input-section button {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+        }
+
+        .todo-item {
             display: flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
+            padding: 16px;
+            background: #262626;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            animation: fadeIn 0.3s ease;
         }
 
-        .quick-options button:hover {
-            background: var(--accent-color);
+        .todo-item.completed {
+            opacity: 0.7;
         }
 
-        .input-container {
-            padding: 15px;
+        .todo-item.completed span {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .todo-checkbox {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 50%;
+            margin-right: 12px;
+            cursor: pointer;
             position: relative;
         }
 
-        .todo-input {
-            background: var(--input-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            border-radius: 24px;
-            padding: 12px 20px;
-            font-size: 16px;
-            width: 100%;
-            transition: all 0.3s;
+        .todo-checkbox:checked {
+            background: var(--success);
+            border-color: var(--success);
         }
 
-        .todo-input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 2px rgba(0, 149, 246, 0.2);
-        }
-
-        .send-button {
+        .todo-checkbox:checked::after {
+            content: '✓';
             position: absolute;
-            right: 25px;
+            color: white;
+            font-size: 12px;
             top: 50%;
-            transform: translateY(-50%);
-            background: transparent;
-            border: none;
-            color: var(--accent-color);
-            font-weight: 600;
-            cursor: pointer;
-            padding: 8px 16px;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
-        .send-button:disabled {
+        .todo-content {
+            flex: 1;
+            font-size: 15px;
+        }
+
+        .todo-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .todo-actions button {
+            background: none;
+            border: none;
             color: var(--text-secondary);
-            cursor: default;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .todo-actions button:hover {
+            color: var(--text-primary);
+        }
+
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .filter-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            color: var(--text-primary);
+            background: #262626;
         }
 
         .empty-state {
-            color: var(--text-secondary);
             text-align: center;
             padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <div class="container">
         <div class="header">
-            <div class="logo">
-                <i class="fas fa-check-circle"></i>
-                TaskFlow
-            </div>
-            <button class="action-btn" onclick="todoApp.clearCompleted()">
-                <i class="fas fa-broom"></i>
+            <h1>Todo List</h1>
+            <button onclick="clearCompleted()" style="background: none; border: none; color: var(--danger); cursor: pointer;">
+                <i class="fas fa-trash"></i>
             </button>
         </div>
 
-        <div class="messages-container" id="todoList"></div>
-
-        <div id="emptyState" class="empty-state d-none">
-            <i class="fas fa-tasks fa-3x mb-3"></i>
-            <p>Your task list is empty!</p>
-        </div>
-
         <div class="input-section">
-            <div class="quick-options">
-                <button onclick="todoApp.setPriority('high')">
-                    <i class="fas fa-flag" style="color: var(--priority-high)"></i>
-                    High
-                </button>
-                <button onclick="todoApp.setPriority('medium')">
-                    <i class="fas fa-flag" style="color: var(--priority-medium)"></i>
-                    Medium
-                </button>
-                <button onclick="todoApp.setPriority('low')">
-                    <i class="fas fa-flag" style="color: var(--priority-low)"></i>
-                    Low
-                </button>
-                <button onclick="todoApp.showDatePicker()">
-                    <i class="far fa-calendar"></i>
-                    Due Date
-                </button>
-            </div>
-
-            <div class="input-container">
-                <form id="todoForm">
-                    <input type="text" class="todo-input" placeholder="Add a new task..." required>
-                    <input type="hidden" id="priorityInput">
-                    <input type="hidden" id="dueDateInput">
-                    <button type="submit" class="send-button" disabled>Add</button>
-                </form>
-            </div>
+            <input type="text" id="todoInput" placeholder="Add a new task..." autocomplete="off">
+            <button onclick="addTodo()">
+                <i class="fas fa-plus"></i>
+            </button>
         </div>
+
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterTodos('all')">All</button>
+            <button class="filter-btn" onclick="filterTodos('active')">Active</button>
+            <button class="filter-btn" onclick="filterTodos('completed')">Completed</button>
+        </div>
+
+        <div id="todoList"></div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script>
-        class TodoApp {
-            constructor() {
-                this.todos = JSON.parse(localStorage.getItem('todos')) || [];
-                this.form = document.getElementById('todoForm');
-                this.input = this.form.querySelector('.todo-input');
-                this.sendButton = this.form.querySelector('.send-button');
-                this.todoList = document.getElementById('todoList');
-                this.emptyState = document.getElementById('emptyState');
-                this.priorityInput = document.getElementById('priorityInput');
-                this.dueDateInput = document.getElementById('dueDateInput');
-                this.editingId = null;
-                
-                this.initialize();
-                this.initializeDatePicker();
-            }
+        let todos = JSON.parse(localStorage.getItem('todos')) || [];
+        let currentFilter = 'all';
 
-            initialize() {
-                this.form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    if (this.editingId !== null) {
-                        this.updateTodo();
-                    } else {
-                        this.addTodo();
-                    }
+        toastr.options = {
+            "closeButton": true,
+            "positionClass": "toast-bottom-center",
+            "preventDuplicates": true,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "2000",
+            "backgroundColor": "#262626"
+        };
+
+        function saveTodos() {
+            localStorage.setItem('todos', JSON.stringify(todos));
+            renderTodos();
+        }
+
+        function addTodo() {
+            const input = document.getElementById('todoInput');
+            const text = input.value.trim();
+            
+            if (text) {
+                todos.unshift({
+                    id: Date.now(),
+                    text,
+                    completed: false,
+                    createdAt: new Date().toISOString()
                 });
+                input.value = '';
+                saveTodos();
+                toastr.success('Task added successfully');
+            }
+        }
 
-                this.input.addEventListener('input', () => {
-                    this.sendButton.disabled = !this.input.value.trim();
-                });
+        document.getElementById('todoInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addTodo();
+        });
 
-                this.renderTodos();
+        function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (todo) {
+                todo.completed = !todo.completed;
+                saveTodos();
+                toastr.info(todo.completed ? 'Task completed!' : 'Task uncompleted');
+            }
+        }
+
+        function deleteTodo(id) {
+            todos = todos.filter(t => t.id !== id);
+            saveTodos();
+            toastr.error('Task deleted');
+        }
+
+        function filterTodos(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.toLowerCase() === filter);
+            });
+            renderTodos();
+        }
+
+        function clearCompleted() {
+            const completedCount = todos.filter(t => t.completed).length;
+            if (completedCount === 0) return;
+            
+            todos = todos.filter(t => !t.completed);
+            saveTodos();
+            toastr.success(`Cleared ${completedCount} completed ${completedCount === 1 ? 'task' : 'tasks'}`);
+        }
+
+        function renderTodos() {
+            const todoList = document.getElementById('todoList');
+            let filteredTodos = todos;
+            
+            if (currentFilter === 'active') {
+                filteredTodos = todos.filter(t => !t.completed);
+            } else if (currentFilter === 'completed') {
+                filteredTodos = todos.filter(t => t.completed);
             }
 
-            initializeDatePicker() {
-                this.datePicker = flatpickr("#dueDateInput", {
-                    enableTime: true,
-                    dateFormat: "Y-m-d H:i",
-                    minDate: "today",
-                    theme: "dark"
-                });
+            if (filteredTodos.length === 0) {
+                todoList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-tasks"></i>
+                        <p>No ${currentFilter === 'all' ? '' : currentFilter} tasks found</p>
+                    </div>
+                `;
+                return;
             }
 
-            showDatePicker() {
-                this.datePicker.open();
-            }
+            todoList.innerHTML = filteredTodos.map(todo => `
+                <div class="todo-item ${todo.completed ? 'completed' : ''}" id="${todo.id}">
+                    <input type="checkbox" class="todo-checkbox" 
+                           ${todo.completed ? 'checked' : ''} 
+                           onclick="toggleTodo(${todo.id})">
+                    <span class="todo-content">${todo.text}</span>
+                    <div class="todo-actions">
+                        <button onclick="deleteTodo(${todo.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-            setPriority(priority) {
-                this.priorityInput.value = priority;
-                document.querySelectorAll('.quick-options button').forEach(btn => {
-                    btn.style.background = btn.textContent.trim().toLowerCase() === priority ? 
-                        'var(--accent-color)' : 'var(--message-bg)';
-                });
-            }
-
-            addTodo() {
-                const text = this.input.value.trim();
-                if (text) {
-                    const todo = {
-                        id: Date.now(),
-                        text,
-                        completed: false,
-                        timestamp: new Date().toISOString(),
-                        priority: this.priorityInput.value || 'medium',
-                        dueDate: this.dueDateInput.value,
-                    };
-                    
-                    this.todos.unshift(todo);
-                    this.saveTodos();
-                    this.renderTodos();
-                    this.resetForm();
-                }
-            }
-
-            resetForm() {
-                this.input.value = '';
-                this.priorityInput.value = '';
-                this.dueDateInput.value = '';
-                this.sendButton.disabled = true;
-                document.querySelectorAll('.quick-options button').forEach(btn => {
-                    btn.style.background = 'var(--message-bg)';
-                });
-            }
-
-            toggleTodo(id) {
-                this.todos = this.todos.map(todo => 
-                    todo.id === id ? {...todo, completed: !todo.completed} : todo
-                );
-                this.saveTodos();
-                this.renderTodos();
-            }
-
-            editTodo(id) {
-                const todo = this.todos.find(t => t.id === id);
-                if (todo) {
-                    this.editingId = id;
-                    this.input.value = todo.text;
-                    this.priorityInput.value = todo.priority;
-                    this.dueDateInput.value = todo.dueDate || '';
-                    this.setPriority(todo.priority);
-                    this.input.focus();
-                    this.sendButton.textContent = 'Update';
-                }
-            }
-
-            updateTodo() {
-                const text = this.input.value.trim();
-                if (text) {
-                    this.todos = this.todos.map(todo => 
-                        todo.id === this.editingId ? {
-                            ...todo,
-                            text,
-                            priority: this.priorityInput.value,
-                            dueDate: this.dueDateInput.value
-                        } : todo
-                    );
-                    this.saveTodos();
-                    this.renderTodos();
-                    this.resetForm();
-                    this.editingId = null;
-                    this.sendButton.textContent = 'Add';
-                }
-            }
-
-            deleteTodo(id) {
-                this.todos = this.todos.filter(todo => todo.id !== id);
-                this.saveTodos();
-                this.renderTodos();
-            }
-
-            clearCompleted() {
-                this.todos = this.todos.filter(todo => !todo.completed);
-                this.saveTodos();
-                this.renderTodos();
-            }
-
-            saveTodos() {
-                localStorage.setItem('todos', JSON.stringify(this.todos));
-            }
-
-            formatDate(dateString) {
-                if (!dateString) return '';
-                const date = new Date(dateString);
-                return date.toLocaleString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    hour12: true
-                });
-            }
-
-            renderTodos() {
-                if (this.todos.length === 0) {
-                    this.todoList.innerHTML = '';
-                    this.emptyState.classList.remove('d-none');
-                    return;
-                }
-
-                this.emptyState.classList.add('d-none');
-                this.todoList.innerHTML = this.todos
-                    .map(todo => `
-                        <div class="message ${todo.completed ? 'completed' : ''}" data-id="${todo.id}">
-                            <div class="message-actions">
-                                <button class="action-btn edit" onclick="todoApp.
+        renderTodos();
+    </script>
+</body>
+</html>
